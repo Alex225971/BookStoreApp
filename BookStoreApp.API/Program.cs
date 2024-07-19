@@ -24,6 +24,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddOpenApiDocument();
+
 builder.Host.UseSerilog((ctx, lc) =>
     lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
 
