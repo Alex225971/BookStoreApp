@@ -1,0 +1,68 @@
+﻿@page "/authors/"
+@inject IClient httpClient
+@inject IAuthorService authorService
+
+<h3>Index</h3>
+
+
+@if (!response.Success)
+{
+    <div class="alet alert-danger">
+        <h4>@response.Message</h4>
+    </div>
+}
+
+else
+{
+    @if (Model == null)
+    {
+        <div class="alert alert-info">
+            <h4>Loading data...</h4>
+        </div>
+    }
+
+    else
+    {
+        <a class="btn btn-primary" href="/authors/create">Create</a>
+        <br />
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var author in Model)
+                {
+                    <tr>
+                        <td>@author.FirstName</td>
+                        <td>@author.LastName</td>
+                        <td>
+                            <a class="btn btn-secondary" href="authors/details/@author.Id">Details</a>
+                            <a class="btn btn-outline-primary" href="authors/edit/@author.Id">Edit</a>
+                            <a class="btn btn-danger" href="authors/delete">Delete</a>
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+
+@code {
+    private List<AuthorReadOnlyDto> Model;
+    private Response<List<AuthorReadOnlyDto>> response = new Response<List<AuthorReadOnlyDto>> { Success = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        response = await authorService.GetAuthors();
+
+        if (response.Success)
+        {
+            Model = response.Data;
+        }
+    }
+}
