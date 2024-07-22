@@ -9,6 +9,7 @@ using BookStoreApp.API.Data;
 using BookStoreApp.API.Models.Author;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper.QueryableExtensions;
 
 namespace BookStoreApp.API.Controllers
 {
@@ -46,12 +47,14 @@ namespace BookStoreApp.API.Controllers
 
         // GET: api/Authors/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AuthorReadOnlyDto>> GetAuthor(int id)
+        public async Task<ActionResult<AuthorDetailsDto>> GetAuthor(int id)
         {
             try
             {
-                var authorFromDb = await _context.Authors.FindAsync(id);
-                var author = _mapper.Map<AuthorReadOnlyDto>(authorFromDb);
+                var author = await _context.Authors
+                    .Include(a => a.Books)
+                    .ProjectTo<AuthorDetailsDto>(_mapper.ConfigurationProvider)
+                    .SingleOrDefaultAsync(a => a.Id == id);
 
                 if (author == null)
                 {

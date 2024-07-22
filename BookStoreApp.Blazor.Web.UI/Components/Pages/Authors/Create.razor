@@ -1,6 +1,8 @@
 ﻿@page "/authors/create"
 @inject IAuthorService authorService
 @inject NavigationManager navManager
+@attribute [Authorize(Roles = "admin")]
+
 <div class="card">
     <div class="card-title">
         <h3>Create new author</h3>

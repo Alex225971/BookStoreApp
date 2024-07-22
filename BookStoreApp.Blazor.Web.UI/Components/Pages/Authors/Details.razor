@@ -1,0 +1,90 @@
+﻿@page "/authors/details/{id:int}"
+@inject IAuthorService authorService
+@inject NavigationManager navManager
+
+<div class="card">
+    <div class="card-title">
+        <h3>Author Details</h3>
+    </div>
+
+
+    <div class="card-body">
+        <EditForm Model="Model">
+            <fieldset disabled="true">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <InputText class="form-control mb-2" type="text" @bind-Value="Model.FirstName" />
+                    <ValidationMessage For="@(() => Model.FirstName)" />
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <InputText class="form-control mb-2" type="text" @bind-Value="Model.LastName" />
+                    <ValidationMessage For="@(() => Model.LastName)" />
+                </div>
+                <div class="form-group">
+                    <label>Biography</label>
+                    <InputText class="form-control mb-2" type="text" @bind-Value="Model.Bio" />
+                    <ValidationMessage For="@(() => Model.Bio)" />
+                </div>
+            </fieldset>
+
+            @if (Model.Books == null || Model.Books.Any() == false)
+            {
+                <div class="alert alert-dismissible alert-secondary">
+                    No books found for this author
+                </div>
+            }
+            else
+            {
+                foreach (var book in Model.Books)
+                {
+                    <div class="card">
+                        <img src="@book.Image" class="card-img-top" alt="@book.Title" />
+                        <div class="card-title">
+                            @book.Title - @book.Price.ToString("c")
+                        </div>
+                        <div class="card-body">
+                            <a href="#" class="btn btn-primary">View book</a>
+                        </div>
+                    </div>
+                }
+
+            }
+
+            <button @onclick="GoToEdit" class="btn btn-warning">
+                <span class="bi bi-house-door-fill-nav-menu"></span>
+                Edit this author
+            </button>
+
+            <button @onclick="BackToAuthors" class="btn btn-outline-primary">
+                <span class="bi bi-house-door-fill-nav-menu"></span>
+                Back to authors
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private AuthorDetailsDto Model = new AuthorDetailsDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await authorService.GetAuthor(id);
+        if (response.Success)
+        {
+            Model = response.Data;
+        }
+    }
+
+    private void BackToAuthors()
+    {
+        navManager.NavigateTo("/authors/");
+    }
+
+    private void GoToEdit()
+    {
+        navManager.NavigateTo($"/authors/edit/{Model.Id}");
+    }
+}

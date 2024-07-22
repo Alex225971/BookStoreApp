@@ -1,6 +1,8 @@
 ﻿@page "/authors/edit/{id:int}"
 @inject IAuthorService authorService
 @inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
 <div class="card">
     <div class="card-title">
         <h3>Update existing author</h3>
