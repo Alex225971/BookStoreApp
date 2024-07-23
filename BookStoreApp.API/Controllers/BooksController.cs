@@ -20,11 +20,13 @@ namespace BookStoreApp.API.Controllers
     {
         private readonly BookStoreDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public BooksController(BookStoreDbContext context, IMapper mapper)
+        public BooksController(BookStoreDbContext context, IMapper mapper, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _mapper = mapper;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: api/Books
@@ -49,6 +51,22 @@ namespace BookStoreApp.API.Controllers
             return book;
         }
 
+        private string CreateFile(string imgBase64, string imgName)
+        {
+            var url = HttpContext.Request.Host.Value;
+            var ext = Path.GetExtension(imgName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var path = $"{_webHostEnvironment.WebRootPath}\\res\\books\\img\\{fileName}";
+
+            byte[] image = Convert.FromBase64String(imgBase64);
+
+            var fileStream = System.IO.File.Create(path);
+            fileStream.Write(image, 0, image.Length);
+            fileStream.Close();
+
+            return $"https://{url}/res/books/img/{fileName}";
+        }
+
         // PUT: api/Books/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -65,6 +83,20 @@ namespace BookStoreApp.API.Controllers
             {
                 return NotFound();
             }
+
+            if (!string.IsNullOrEmpty(bookDto.ImageData))
+            {
+                bookDto.Image = CreateFile(bookDto.ImageData, bookDto.OriginalImageName);
+
+                var imgName = Path.GetFileName(book.Image);
+                var path = $"{_webHostEnvironment.WebRootPath}\\res\\books\\img{imgName}";
+                if (System.IO.File.Exists(path)) 
+                {
+                    System.IO.File.Delete(path);
+                }
+
+            }
+
             _mapper.Map(bookDto, book);
             _context.Entry(book).State = EntityState.Modified;
 
@@ -94,6 +126,7 @@ namespace BookStoreApp.API.Controllers
         public async Task<ActionResult<BookCreateDto>> PostBook(BookCreateDto bookDto)
         {
             var book = _mapper.Map<Book>(bookDto);
+            book.Image = CreateFile(bookDto.ImageData, bookDto.OriginalImageName);
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
 

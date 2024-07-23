@@ -1,0 +1,141 @@
+﻿@page "/books/edit/{id:int}"
+@inject IBookService bookService
+@inject IAuthorService authorService
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="card">
+    <div class="card-title">
+        <h3>Update existing book</h3>
+    </div>
+
+
+    <div class="card-body">
+        <EditForm Model="Book" OnValidSubmit="HandleUpdateBook">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label for="title">Book title</label>
+                <InputText @bind-Value="Book.Title" class="form-control" id="title" />
+            </div>
+            <div class="form-group">
+                <label for="isbn">Book ISBN</label>
+                <InputText @bind-Value="Book.Isbn" class="form-control" id="isbn" />
+            </div>
+            <div class="form-group">
+                <label for="price">Book price</label>
+                <InputNumber @bind-Value="Book.Price" class="form-control" id="price" />
+            </div>
+            <div class="form-group">
+                <label for="year">Year of publication</label>
+                <InputNumber @bind-Value="Book.Year" class="form-control" id="year" />
+            </div>
+            <div class="form-group">
+                <label for="summary">Book summary</label>
+                <InputTextArea @bind-Value="Book.Summary" class="form-control" id="summary" />
+            </div>
+            <div class="form-group">
+                <label for="author">Author</label>
+                <InputSelect @bind-Value="Book.AuthorId" class="form-select" id="author">
+                    <option value="">-- Select and Book --</option>
+                    @foreach (var author in Authors)
+                    {
+                        <option value="@author.Id">@author.FirstName @author.LastName</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Book cover photo</label>
+                <div>
+                    <InputFile OnChange="HandleFileUpload" />
+                    <img src="@img" width="75px" height="75px" class="img-thumbnail" />
+                    <p class="text-danger">@UploadFileWarning</p>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">
+                <span class="bi bi-plus-square-fill-nav-menu"></span>
+                Update Book
+            </button>
+            <button @onclick="BackToBooks" class="btn btn-outline-primary" type="button">
+                <span class="bi bi-house-door-fill-nav-menu"></span>
+                Back to books
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private BookUpdateDto Book = new BookUpdateDto();
+    private List<AuthorReadOnlyDto> Authors = new();
+
+    private string img = string.Empty;
+    private string UploadFileWarning = string.Empty;
+    private long maxFileSize = 1024 * 1024 * 50;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var bookResponse = await bookService.GetBookUpdate(id);
+        if (bookResponse.Success)
+        {
+            Book = bookResponse.Data;
+            img = Book.Image;
+        }
+
+        var authorResponse = await authorService.GetAuthors();
+        if (authorResponse.Success)
+        {
+            Authors = authorResponse.Data;
+        }
+    }
+
+    private async Task HandleUpdateBook()
+    {
+        var response = await bookService.UpdateBook(id, Book);
+        if (response.Success)
+        {
+            BackToBooks();
+        }
+    }
+
+    private void BackToBooks()
+    {
+        navManager.NavigateTo("/books/");
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if(file.Size > maxFileSize)
+            {
+                UploadFileWarning = "File too large";
+                return;
+            }
+            var ext = System.IO.Path.GetExtension(file.Name);
+            if ((ext.ToLower().Contains("jpg") || ext.ToLower().Contains("png") || ext.ToLower().Contains("jpeg")) == false)
+            {
+                UploadFileWarning = "Please select a valid file format";
+                return;
+            }
+            var byteArray = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(byteArray);
+            string imageType = file.ContentType;
+            string base64string = Convert.ToBase64String(byteArray);
+
+            Book.ImageData = base64string;
+            Book.OriginalImageName = file.Name;
+            img = $"data: {imageType}; base64, {base64string}";
+        }
+    }
+
+    private void BackToList()
+    {
+        navManager.NavigateTo("/books/");
+    }
+}
+

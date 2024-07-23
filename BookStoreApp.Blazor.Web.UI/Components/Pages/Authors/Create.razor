@@ -1,7 +1,7 @@
 ﻿@page "/authors/create"
 @inject IAuthorService authorService
 @inject NavigationManager navManager
-@attribute [Authorize(Roles = "admin")]
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="card">
     <div class="card-title">
@@ -32,7 +32,7 @@
                 <span class="bi bi-plus-square-fill-nav-menu"></span>
                 Create Author
             </button>
-            <button @onclick="BackToAuthors" class="btn btn-outline-primary">
+            <button @onclick="BackToAuthors" class="btn btn-outline-primary" type="button">
                 <span class="bi bi-house-door-fill-nav-menu"></span>
                 Back to authors
             </button>
