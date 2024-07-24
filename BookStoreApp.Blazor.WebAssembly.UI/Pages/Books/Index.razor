@@ -1,0 +1,94 @@
+﻿@page "/books/"
+@inject IClient httpClient
+@inject IBookService bookService
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+<h3>Index</h3>
+
+
+@if (!response.Success)
+{
+    <div class="alet alert-danger">
+        <h4>@response.Message</h4>
+    </div>
+}
+
+else
+{
+    @if (Model == null)
+    {
+        <div class="alert alert-info">
+            <h4>Loading data...</h4>
+        </div>
+    }
+
+    else
+    {
+        <AuthorizeView Roles="Admin">
+            <a class="btn btn-primary" href="/books/create">Create</a>
+        </AuthorizeView>
+
+        <br />
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Book</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var book in Model)
+                {
+                    <tr>
+                        <td><img src="@book.Image" width="100px" height="100px"/></td>
+                        <td>@book.Title</td>
+                        <td>@book.Price.ToString("c")</td>
+                        <td><a class="btn btn-link" href="/authors/details/@book.AuthorId">@book.AuthorName</a></td>
+                        <td>
+                            <a class="btn btn-secondary" href="books/details/@book.Id">Details</a>
+                            <AuthorizeView Roles="Admin">
+                                <a class="btn btn-outline-primary" href="books/edit/@book.Id">Edit</a>
+                                <button class="btn btn-danger" onclick=@(() => Delete(@book.Id))>Delete</button>
+                            </AuthorizeView>
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+
+@code {
+    private List<BookReadOnlyDto> Model;
+    private Response<List<BookReadOnlyDto>> response = new Response<List<BookReadOnlyDto>> { Success = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        response = await bookService.GetBooks();
+
+        if (response.Success)
+        {
+            Model = response.Data;
+        }
+    }
+
+    private async Task Delete(int bookId)
+    {
+        var book = Model.First(b => b.Id == bookId);
+        var confirm = await js.InvokeAsync<bool>("confirm", $"Are you sure you wish to delete {book.Title}?");
+        if (confirm)
+        {
+            var response = await bookService.Delete(bookId);
+            if (response.Success)
+            {
+                navManager.NavigateTo(navManager.Uri, true);
+            }
+        }
+    }
+}
