@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Blazored.LocalStorage;
+using BookStoreApp.Blazor.Web.UI.Models;
 using BookStoreApp.Blazor.Web.UI.Services.Base;
 using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace BookStoreApp.Blazor.Web.UI.Services
 
         public async Task<Response<int>> CreateAuthor(AuthorCreateDto author)
         {
-            Response<int> response = new ();
+            Response<int> response = new();
             try
             {
                 await GetBearerToken();
@@ -57,7 +58,7 @@ namespace BookStoreApp.Blazor.Web.UI.Services
             try
             {
                 await GetBearerToken();
-                var data = await _client.AuthorsGETAsync(id);
+                var data = await _client.AuthorsGET2Async(id);
                 response = new Response<AuthorDetailsDto>
                 {
                     Data = data,
@@ -73,24 +74,24 @@ namespace BookStoreApp.Blazor.Web.UI.Services
             return response;
         }
 
-        public async Task<Response<List<AuthorReadOnlyDto>>> GetAuthors()
+        public async Task<Response<AuthorReadOnlyDtoVirtualizeResponse>> Get(QueryParams queryParams)
         {
-            Response<List<AuthorReadOnlyDto>> response;
+            Response<AuthorReadOnlyDtoVirtualizeResponse> response;
 
             try
             {
                 await GetBearerToken();
-                var data = await _client.AuthorsAllAsync();
-                response = new Response<List<AuthorReadOnlyDto>>
+                var data = await _client.AuthorsGETAsync(queryParams.StartIndex, queryParams.PageSize);
+                response = new Response<AuthorReadOnlyDtoVirtualizeResponse>
                 {
-                    Data = data.ToList(),
+                    Data = data,
                     Success = true
                 };
             }
             catch (ApiException e)
             {
 
-                response = ConvertApiExceptions<List<AuthorReadOnlyDto>>(e);
+                response = ConvertApiExceptions<AuthorReadOnlyDtoVirtualizeResponse>(e);
             }
 
             return response;
@@ -103,7 +104,7 @@ namespace BookStoreApp.Blazor.Web.UI.Services
             try
             {
                 await GetBearerToken();
-                var data = await _client.AuthorsGETAsync(id);
+                var data = await _client.AuthorsGET2Async(id);
                 response = new Response<AuthorUpdateDto>
                 {
                     Data = _mapper.Map<AuthorUpdateDto>(data),
@@ -131,6 +132,27 @@ namespace BookStoreApp.Blazor.Web.UI.Services
             {
 
                 response = ConvertApiExceptions<int>(e);
+            }
+            return response;
+        }
+
+        public async Task<Response<List<AuthorReadOnlyDto>>> Get()
+        {
+            Response<List<AuthorReadOnlyDto>> response;
+
+            try
+            {
+                await GetBearerToken();
+                var data = await _client.GetAllAsync();
+                response = new Response<List<AuthorReadOnlyDto>>
+                {
+                    Data = data.ToList(),
+                    Success = true
+                };
+            }
+            catch (ApiException e)
+            {
+                response = ConvertApiExceptions<List<AuthorReadOnlyDto>>(e);
             }
             return response;
         }

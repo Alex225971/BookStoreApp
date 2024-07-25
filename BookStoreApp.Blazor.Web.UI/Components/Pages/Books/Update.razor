@@ -85,7 +85,7 @@
             img = Book.Image;
         }
 
-        var authorResponse = await authorService.GetAuthors();
+        var authorResponse = await authorService.Get();
         if (authorResponse.Success)
         {
             Authors = authorResponse.Data;

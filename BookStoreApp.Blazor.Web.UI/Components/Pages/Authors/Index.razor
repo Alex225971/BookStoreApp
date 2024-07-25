@@ -1,4 +1,5 @@
 ﻿@page "/authors/"
+@using BookStoreApp.Blazor.Web.UI.Models
 @inject IClient httpClient
 @inject IAuthorService authorService
 @inject NavigationManager navManager
@@ -16,7 +17,7 @@
 
 else
 {
-    @if (Model == null)
+    @if (Authors == null)
     {
         <div class="alert alert-info">
             <h4>Loading data...</h4>
@@ -28,9 +29,9 @@ else
         <AuthorizeView Roles="Admin">
             <a class="btn btn-primary" href="/authors/create">Create</a>
         </AuthorizeView>
+        <AuthorTable Authors="Authors" TotalSize="TotalSize" OnScroll="LoadAuthors"/>
         
-        <br />
-        <table class="table table-responsive">
+        @* <table class="table table-responsive">
             <thead>
                 <tr>
                     <th>First Name</th>
@@ -54,36 +55,31 @@ else
                     </tr>
                 }
             </tbody>
-        </table>
+        </table> *@
     }
 }
 
 
 @code {
-    private List<AuthorReadOnlyDto> Model;
-    private Response<List<AuthorReadOnlyDto>> response = new Response<List<AuthorReadOnlyDto>> { Success = true };
+    public List<AuthorReadOnlyDto> Authors;
+    public int TotalSize { get; set; }
+    private Response<AuthorReadOnlyDtoVirtualizeResponse> response = new Response<AuthorReadOnlyDtoVirtualizeResponse> { Success = true };
 
     protected override async Task OnInitializedAsync()
     {
-        response = await authorService.GetAuthors();
+        response = await authorService.Get(new QueryParams { StartIndex = 0 });
 
         if (response.Success)
         {
-            Model = response.Data;
+            Authors = response.Data.Results.ToList();
         }
     }
 
-    private async Task Delete(int authorId)
+    private async Task LoadAuthors(QueryParams queryParams)
     {
-        var author = Model.First(a => a.Id == authorId);
-        var confirm = await js.InvokeAsync<bool>("confirm", $"Are you sure you wish to delete {author.FirstName} {author.LastName}");
-        if (confirm)
-        {
-            var response = await authorService.Delete(authorId);
-            if (response.Success)
-            {
-                navManager.NavigateTo(navManager.Uri, true);
-            }
-        }
+        var virualizeResult = await authorService.Get(queryParams);
+        Authors = virualizeResult.Data.Results.ToList();
+        TotalSize = virualizeResult.Data.TotalSize;
     }
+
 }

@@ -11,6 +11,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper.QueryableExtensions;
 using BookStoreApp.API.Repositories;
+using BookStoreApp.API.Models;
 
 namespace BookStoreApp.API.Controllers
 {
@@ -30,14 +31,30 @@ namespace BookStoreApp.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/Authors
+        // GET: api/Authors?startindex=0&pageSize=15
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuthorReadOnlyDto>>> GetAuthors()
+        public async Task<ActionResult<VirtualizeResponse<AuthorReadOnlyDto>>> GetAuthors([FromQuery] QueryParams queryParams)
         {
             try
             {
-                var authors = _mapper.Map<IEnumerable<AuthorReadOnlyDto>>(await _authorsRepo.GetAllAsync());
-                return Ok(authors);
+                return await _authorsRepo.GetAllAsync<AuthorReadOnlyDto>(queryParams);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Error performing GET operation in {nameof(GetAuthors)}");
+                return StatusCode(500, "There was an error completing the request, check server connection and try again");
+            }
+        }
+
+        // GET: api/Authors
+        [HttpGet("GetAll")]
+        public async Task<ActionResult<List<AuthorReadOnlyDto>>> GetAuthors()
+        {
+            try
+            {
+                var authors = await _authorsRepo.GetAllAsync();
+                var authorDtos = _mapper.Map<IEnumerable<AuthorReadOnlyDto>>(authors);
+                return Ok(authorDtos);
             }
             catch (Exception e)
             {
