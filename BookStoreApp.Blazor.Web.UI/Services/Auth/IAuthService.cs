@@ -4,7 +4,7 @@ namespace BookStoreApp.Blazor.Web.UI.Services.Auth
 {
     public interface IAuthService
     {
-        Task<bool> AuthenticateAsync(LoginUserDto loginModel);
+        Task<Response<AuthResponse>> AuthenticateAsync(LoginUserDto loginModel);
         public Task Logout();
     }
 }

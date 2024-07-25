@@ -33,29 +33,16 @@
 
     public async Task HandleLoginAsync()
     {
-        try
-        {
-            var response = await authService.AuthenticateAsync(LoginModel);
-            if(response)
-            {
-                navManager.NavigateTo("/");
-            }
-            message = "An error occured, please try again";
 
-        } 
-        catch (ApiException e)
+        var response = await authService.AuthenticateAsync(LoginModel);
+        if (response.Success)
         {
-            if(e.StatusCode >= 200 && e.StatusCode <= 299)
-            {
-                NavigateToLogin();
-            }
-            message = e.Response;
+            navManager.NavigateTo("/");
         } 
-        catch(Exception e)
+        else
         {
-            throw;
+            message = response.Message;
         }
-
     }
 
     private void NavigateToLogin()
